@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  nginx:
+    image: hiqdev/nginx-proxy
+    container_name: "nginx-proxy-${IP}"
+    ports:
+      - "${IP}:80:80"
+      - "${IP}:443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+        # above is for letsencrypt
+      - ./env/ssl:/etc/nginx/certs:ro
+      - ssl:/usr/share/nginx/html
+      - ssl:/etc/nginx/vhost.d
+    networks:
+      - nginx-proxy-network
+    environment:
+      - "DEFAULT_HOST=default"
+
+  letsencrypt:
+    image: hiqdev/docker-letsencrypt-nginx-proxy-companion
+    container_name: "letsencrypt-nginx-proxy-${IP}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./env/ssl:/etc/nginx/certs
+      - ssl:/usr/share/nginx/html
+      - ssl:/etc/nginx/vhost.d
+    networks:
+      - nginx-proxy-network
+    environment:
+      - "NGINX_PROXY_CONTAINER=nginx-proxy-${IP}"
+
+volumes:
+  ssl:
+
+networks:
+  nginx-proxy-network:
+    external:
+      name: "nginx-proxy-network-${IP}"
