@@ -1,0 +1,134 @@
+#!/usr/bin/env python
+
+import os
+import argparse
+from pprint import pprint
+
+class NPC:
+    def __init__(self, args):
+        self.args = args
+        self.command = args.command
+        self.ip = args.ip
+        self.name = 'nginx-proxy-' + self.ip
+        self.service_name = self.name + '.service'
+        self.dir = self.prepare_dir()
+        method = getattr(self, self.command, None)
+        if callable(method):
+            method()
+        else:
+            print 'Wrong command: ' + self.command
+
+    def prepare_dir(self):
+        subdir = self.name
+        dir = self.args.dir
+        if dir != '':
+            subdir = dir + '/' + subdir
+        if subdir[0] == '/':
+            return subdir
+        else:
+            return os.path.realpath(os.getcwd() + '/' + subdir)
+
+    def my_dir(self):
+        return os.path.dirname(os.path.realpath(__file__))
+
+    def get_path(self, filename):
+        return self.dir + '/' + filename
+
+    def setup(self):
+        print 'Setuping: ' + self.dir
+        self.setup_files()
+        self.setup_network()
+
+    def setup_files(self):
+        if not os.path.exists(self.dir):
+            os.makedirs(self.dir)
+            print 'mkdir ' + self.dir
+
+        dc_path = self.get_path('docker-compose.yml')
+        if not os.path.exists(dc_path):
+            self.write_dc(dc_path)
+            print 'written ' + dc_path
+
+        env_path = self.get_path('.env')
+        if not os.path.exists(env_path):
+            self.write_env(env_path)
+            print 'written ' + env_path
+
+        service_path = self.get_path(self.service_name)
+        if not os.path.exists(service_path):
+            self.write_service(service_path)
+            print 'written ' + service_path
+
+        systemd_path = '/etc/systemd/system/' + self.service_name
+        if not os.path.exists(systemd_path):
+            self.system('sudo cp %s %s' % (service_path, systemd_path))
+
+    def setup_network(self):
+        if (os.system('docker network inspect %s > not 2> err' % self.name)):
+            self.system('docker network create ' + self.name)
+
+    def start(self):
+        self.setup()
+        self.systemctl('enable')
+        self.systemctl('start')
+
+    def restart(self):
+        self.systemctl('restart')
+
+    def tail(self):
+        self.system('journalctl -f -u %s' % self.service_name)
+
+    def stop(self):
+        self.systemctl('stop')
+
+    def status(self):
+        self.systemctl('status')
+
+    def systemctl(self, command):
+        self.system('sudo systemctl %s %s' % (command, self.service_name))
+
+    def write_dc(self, dst):
+        src = self.my_dir() + '/docker-compose.yml'
+        os.system('cp %s %s' % (src, dst))
+
+    def write_env(self, dst):
+        self.write_file(dst, 'IP='+self.ip+'\n')
+
+    def write_service(self, dst):
+        self.write_file(dst, self.service_config())
+    
+    def write_file(self, path, content):
+        with open(path, 'w') as file:
+            file.write(content)
+
+    def system(self, cmd):
+        print cmd
+        os.system(cmd)
+
+    def service_config(self):
+        return '''\
+[Unit]
+Description=nginx-proxy for {ip}
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory={dir}
+Restart=always
+ExecStart=/usr/local/bin/docker-compose up
+ExecStop=/usr/local/bin/docker-compose stop
+
+[Install]
+WantedBy=multi-user.target
+'''.format(
+            ip=self.ip,
+            dir=self.dir
+        )
+
+parser = argparse.ArgumentParser(description="nginx-proxy-common")
+parser.add_argument('command',        action='store', type=str, help='command: setup, start, restart, stop, status, tail')
+parser.add_argument('ip',             action='store', type=str, help='IP address')
+parser.add_argument('dir', nargs='?', action='store', type=str, help='vendor directory', default='')
+
+npc = NPC(parser.parse_args())
