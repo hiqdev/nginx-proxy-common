@@ -35,7 +35,6 @@ class NPC:
         return self.dir + '/' + filename
 
     def setup(self):
-        print 'Setuping: ' + self.dir
         self.setup_files()
         self.setup_network()
 
@@ -64,8 +63,9 @@ class NPC:
             self.system('sudo cp %s %s' % (service_path, systemd_path))
 
     def setup_network(self):
-        if (os.system('docker network inspect %s > not 2> err' % self.name)):
-            self.system('docker network create ' + self.name)
+        name = 'nginx-proxy-network-' + self.ip
+        if (os.system('docker network inspect %s > not 2> err' % name)):
+            self.system('docker network create ' + name)
 
     def start(self):
         self.setup()
