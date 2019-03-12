@@ -127,7 +127,7 @@ WantedBy=multi-user.target
         )
 
 parser = argparse.ArgumentParser(description="nginx-proxy-common")
-parser.add_argument('command',        action='store', type=str, help='command: setup, start, restart, stop, status, tail')
+parser.add_argument('command',        action='store', type=str, help='setup, start, restart, stop, status, tail')
 parser.add_argument('ip',             action='store', type=str, help='IP address')
 parser.add_argument('dir', nargs='?', action='store', type=str, help='vendor directory', default='')
 
