@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import argparse
@@ -16,7 +16,7 @@ class NPC:
         if callable(method):
             method()
         else:
-            print 'Wrong command: ' + self.command
+            print('Wrong command: ' + self.command)
 
     def prepare_dir(self):
         subdir = self.name
@@ -41,22 +41,22 @@ class NPC:
     def setup_files(self):
         if not os.path.exists(self.dir):
             os.makedirs(self.dir)
-            print 'mkdir ' + self.dir
+            print('mkdir ' + self.dir)
 
         dc_path = self.get_path('docker-compose.yml')
         if not os.path.exists(dc_path):
             self.write_dc(dc_path)
-            print 'written ' + dc_path
+            print('written ' + dc_path)
 
         env_path = self.get_path('.env')
         if not os.path.exists(env_path):
             self.write_env(env_path)
-            print 'written ' + env_path
+            print('written ' + env_path)
 
         service_path = self.get_path(self.service_name)
         if not os.path.exists(service_path):
             self.write_service(service_path)
-            print 'written ' + service_path
+            print('written ' + service_path)
 
         systemd_path = '/etc/systemd/system/' + self.service_name
         if not os.path.exists(systemd_path):
@@ -96,13 +96,13 @@ class NPC:
 
     def write_service(self, dst):
         self.write_file(dst, self.service_config())
-    
+
     def write_file(self, path, content):
         with open(path, 'w') as file:
             file.write(content)
 
     def system(self, cmd):
-        print cmd
+        print(cmd)
         os.system(cmd)
 
     def service_config(self):
