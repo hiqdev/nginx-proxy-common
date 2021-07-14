@@ -9,4 +9,4 @@
 
 To setup new proxy for 127.0.0.2 - `./nginx-proxy-common setup 127.0.0.2`
 
-To start service(in fresh-created directory) - `docker-compose up -d`
+To start service(in fresh-created directory) - `./nginx-proxy-common start 127.0.0.2`
