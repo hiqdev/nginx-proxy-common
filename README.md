@@ -6,3 +6,7 @@
       command     setup, start, restart, stop, status, tail
       ip          IP address
       dir         vendor directory
+
+To setup new proxy for 127.0.0.2 - `./nginx-proxy-common setup 127.0.0.2`
+
+To start service(in fresh-created directory) - `./nginx-proxy-common start 127.0.0.2`
